@@ -1,6 +1,6 @@
 Name:           trilead-ssh2
 Version:        213
-Release:        8
+Release:        %mkrel 9
 Summary:        SSH-2 protocol implementation in pure Java
 
 Group:          Development/Java
@@ -35,7 +35,7 @@ crypto functionality is included.
 
 %package javadoc
 Summary:        Javadoc for %{name}
-Group:          Development/Java
+Group:          Development/Java 
 Requires:       %{name} = %{version}-%{release}
 Requires:       jpackage-utils
 
