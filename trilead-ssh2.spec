@@ -1,20 +1,32 @@
 Name:           trilead-ssh2
 Version:        213
-Release:        %mkrel 2.0.2
-Epoch:          0
+Release:        8
 Summary:        SSH-2 protocol implementation in pure Java
+
 Group:          Development/Java
 License:        BSD
-URL:            http://www.trilead.com/Products/Trilead-SSH-2-Java/
-Source0:        %{name}-build%{version}.zip
-Source1:	build.xml
-BuildRequires:  java-rpmbuild >= 0:1.6
+URL:            http://www.trilead.com/Products/Trilead_SSH_for_Java/
+# Not working anymore...
+#http://www.trilead.com/DesktopModules/Releases/download_file.aspx?ReleaseId=4102
+Source0:        trilead-ssh2-build%{version}.zip
+Source1:        build.xml
+Source2:        http://mirrors.ibiblio.org/pub/mirrors/maven2/org/tmatesoft/svnkit/%{name}/build%{version}-svnkit-1.3-patch/%{name}-build%{version}-svnkit-1.3-patch.pom
+
+BuildRequires:  jpackage-utils
+BuildRequires:  java-devel
 BuildRequires:  ant
+Requires:       jpackage-utils
+Requires:       java
+Requires(post):   jpackage-utils
+Requires(postun): jpackage-utils
+
 BuildArch:      noarch
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
+
+#Obsoletes:              ganymed-ssh2 <= 210
+
 
 %description
-Ganymed SSH-2 for Java is a library which implements the SSH-2 protocol in pure
+Trilead SSH-2 for Java is a library which implements the SSH-2 protocol in pure
 Java (tested on J2SE 1.4.2 and 5.0). It allows one to connect to SSH servers
 from within Java programs. It supports SSH sessions (remote command execution
 and shell access), local and remote port forwarding, local stream forwarding,
@@ -24,47 +36,61 @@ crypto functionality is included.
 %package javadoc
 Summary:        Javadoc for %{name}
 Group:          Development/Java
+Requires:       %{name} = %{version}-%{release}
+Requires:       jpackage-utils
 
 %description javadoc
-Javadoc for %{name}.
+API documentation for trilead-ssh2.
 
 %prep
 %setup -q -n %{name}-build%{version}
-%{__cp} %{SOURCE1} build.xml
-%remove_java_binaries
+cp %{SOURCE1} .
+
+# change file encoding
+iconv -f ISO-8859-1 -t UTF-8 -o HISTORY.txt HISTORY.txt
+
+# delete the jars that are in the archive
+rm %{name}-build%{version}.jar
 
 # fixing wrong-file-end-of-line-encoding warnings
-%{__sed} -i 's/\r$//g' LICENSE.txt README.txt HISTORY.txt faq/FAQ.html
-%{_bindir}/find examples -name \*.java | %{_bindir}/xargs -t %{__sed} -i 's/\r$//g'
+sed -i 's/\r//' LICENSE.txt README.txt HISTORY.txt faq/FAQ.html
+find examples -name \*.java -exec sed -i 's/\r//' {} \;
 
 %build
-%ant
+ant
+
 
 %install
-%{__rm} -rf %{buildroot}
-
 # jar
-%{__mkdir_p} %{buildroot}%{_javadir}
-%{__cp} -a dist/lib/%{name}.jar %{buildroot}%{_javadir}/%{name}-%{version}.jar
+install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
+install -m 644 %{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+
+# pom
+mkdir -p %{buildroot}%{_mavenpomdir}
+cp %{SOURCE2} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
+%add_to_maven_depmap org.tmatesoft.svnkit %{name} %{version} JPP %{name}
 
 # javadoc
-%{__mkdir_p} %{buildroot}%{_javadocdir}/%{name}-%{version}
-%{__cp} -a javadoc/* \
-  %{buildroot}%{_javadocdir}/%{name}-%{version}
-%{__ln_s} %{name}-%{version} %{buildroot}%{_javadocdir}/%{name}
+mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+cp -pr javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
-%create_jar_links
+%post
+%update_maven_depmap
 
-%clean
-%{__rm} -rf %{buildroot}
+%postun
+%update_maven_depmap
+
 
 %files
-%defattr(0644,root,root,0755)
-%doc LICENSE.txt HISTORY.txt README.txt faq examples
+%defattr(-,root,root,-)
+%{_mavenpomdir}/JPP-%{name}.pom
+%{_mavendepmapfragdir}/%{name}
 %{_javadir}/*
+%doc LICENSE.txt HISTORY.txt README.txt faq examples
+
 
 %files javadoc
-%defattr(0644,root,root,0755)
-%{_javadocdir}/%{name}-%{version}
+%defattr(-,root,root,-)
 %{_javadocdir}/%{name}
+
 
