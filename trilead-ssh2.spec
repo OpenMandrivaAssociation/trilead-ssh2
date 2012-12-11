@@ -94,3 +94,33 @@ cp -pr javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %{_javadocdir}/%{name}
 
 
+
+
+%changelog
+* Sun Nov 27 2011 Guilherme Moro <guilherme@mandriva.com> 213-11mdv2012.0
++ Revision: 734252
+- rebuild
+- imported package trilead-ssh2
+- imported package trilead-ssh2
+
+* Wed Sep 09 2009 Thierry Vignaud <tv@mandriva.org> 0:213-2.0.2mdv2010.0
++ Revision: 434466
+- rebuild
+
+* Fri Aug 08 2008 Thierry Vignaud <tv@mandriva.org> 0:213-2.0.1mdv2009.0
++ Revision: 269439
+- rebuild early 2009.0 package (before pixel changes)
+
+* Sat Jun 07 2008 Alexander Kurtakov <akurtakov@mandriva.org> 0:213-0.0.1mdv2009.0
++ Revision: 216709
+- new version 213
+
+* Mon Mar 03 2008 Alexander Kurtakov <akurtakov@mandriva.org> 0:212-0.0.1mdv2008.1
++ Revision: 177872
+- new version
+
+* Wed Feb 27 2008 Alexander Kurtakov <akurtakov@mandriva.org> 0:211-0.0.1mdv2008.1
++ Revision: 175924
+- import trilead-ssh2
+
+
