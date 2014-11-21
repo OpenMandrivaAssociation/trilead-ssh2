@@ -1,29 +1,22 @@
+%{?_javapackages_macros:%_javapackages_macros}
+%global patchlvl 4
+
 Name:           trilead-ssh2
-Version:        213
-Release:        %mkrel 11
+Version:        217
+Release:        4.jenkins%{patchlvl}%{?dist}
 Summary:        SSH-2 protocol implementation in pure Java
 
-Group:          Development/Java
-License:        BSD
-URL:            http://www.trilead.com/Products/Trilead_SSH_for_Java/
-# Not working anymore...
-#http://www.trilead.com/DesktopModules/Releases/download_file.aspx?ReleaseId=4102
-Source0:        trilead-ssh2-build%{version}.zip
-Source1:        build.xml
-Source2:        http://mirrors.ibiblio.org/pub/mirrors/maven2/org/tmatesoft/svnkit/%{name}/build%{version}-svnkit-1.3-patch/%{name}-build%{version}-svnkit-1.3-patch.pom
+# project is under BSD, but some parts are MIT licensed
+# see LICENSE.txt for more information
+License:        BSD and MIT
+URL:            https://github.com/jenkinsci/trilead-ssh2
+Source0:        https://github.com/jenkinsci/%{name}/archive/%{name}-build%{version}-jenkins-%{patchlvl}.tar.gz
 
-BuildRequires:  jpackage-utils
-BuildRequires:  java-devel
-BuildRequires:  ant
-Requires:       jpackage-utils
-Requires:       java
-Requires(post):   jpackage-utils
-Requires(postun): jpackage-utils
+BuildRequires:  maven-local
+BuildRequires:  mvn(commons-io:commons-io)
+BuildRequires:  mvn(junit:junit)
 
 BuildArch:      noarch
-
-#Obsoletes:              ganymed-ssh2 <= 210
-
 
 %description
 Trilead SSH-2 for Java is a library which implements the SSH-2 protocol in pure
@@ -35,92 +28,80 @@ crypto functionality is included.
 
 %package javadoc
 Summary:        Javadoc for %{name}
-Group:          Development/Java 
-Requires:       %{name} = %{version}-%{release}
-Requires:       jpackage-utils
 
 %description javadoc
-API documentation for trilead-ssh2.
+API documentation for %{name}.
 
 %prep
-%setup -q -n %{name}-build%{version}
-cp %{SOURCE1} .
+%setup -q -n %{name}-%{name}-build%{version}-jenkins-%{patchlvl}
 
-# change file encoding
-iconv -f ISO-8859-1 -t UTF-8 -o HISTORY.txt HISTORY.txt
+sed -i 's/build%{version}-jenkins-%{patchlvl}/build%{version}.jenkins.%{patchlvl}/' pom.xml
 
-# delete the jars that are in the archive
-rm %{name}-build%{version}.jar
-
-# fixing wrong-file-end-of-line-encoding warnings
-sed -i 's/\r//' LICENSE.txt README.txt HISTORY.txt faq/FAQ.html
-find examples -name \*.java -exec sed -i 's/\r//' {} \;
+# compat symlink/alias
+%mvn_file  : %{name}/%{name} %{name}
+%mvn_alias : "org.tmatesoft.svnkit:trilead-ssh2" "com.trilead:trilead-ssh2"
 
 %build
-ant
-
+%mvn_build
 
 %install
-# jar
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
-install -m 644 %{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+%mvn_install
 
-# pom
-mkdir -p %{buildroot}%{_mavenpomdir}
-cp %{SOURCE2} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
-%add_to_maven_depmap org.tmatesoft.svnkit %{name} %{version} JPP %{name}
+%files -f .mfiles
+%dir %{_javadir}/%{name}
+%doc LICENSE.txt HISTORY.txt README.txt
 
-# javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr javadoc/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-
-%post
-%update_maven_depmap
-
-%postun
-%update_maven_depmap
-
-
-%files
-%defattr(-,root,root,-)
-%{_mavenpomdir}/JPP-%{name}.pom
-%{_mavendepmapfragdir}/%{name}
-%{_javadir}/*
-%doc LICENSE.txt HISTORY.txt README.txt faq examples
-
-
-%files javadoc
-%defattr(-,root,root,-)
-%{_javadocdir}/%{name}
-
-
+%files javadoc -f .mfiles-javadoc
+%doc LICENSE.txt
 
 
 %changelog
-* Sun Nov 27 2011 Guilherme Moro <guilherme@mandriva.com> 213-11mdv2012.0
-+ Revision: 734252
-- rebuild
-- imported package trilead-ssh2
-- imported package trilead-ssh2
+* Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 217-4.jenkins4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
-* Wed Sep 09 2009 Thierry Vignaud <tv@mandriva.org> 0:213-2.0.2mdv2010.0
-+ Revision: 434466
-- rebuild
+* Wed Apr 02 2014 Michal Srb <msrb@redhat.com> - 217-3.jenkins4
+- Build version 217 from Jenkins sources
 
-* Fri Aug 08 2008 Thierry Vignaud <tv@mandriva.org> 0:213-2.0.1mdv2009.0
-+ Revision: 269439
-- rebuild early 2009.0 package (before pixel changes)
+* Mon Jan 06 2014 Michal Srb <msrb@redhat.com> - 217-2
+- Remove unneeded files
+- Add POM file to sources
 
-* Sat Jun 07 2008 Alexander Kurtakov <akurtakov@mandriva.org> 0:213-0.0.1mdv2009.0
-+ Revision: 216709
-- new version 213
+* Mon Jan 06 2014 Michal Srb <msrb@redhat.com> - 217-1
+- Adapt to current packaging guidelines
+- Build with XMvn
+- Update to upstream version 217
+- Add alias (Resolves: rhbz#1048829)
 
-* Mon Mar 03 2008 Alexander Kurtakov <akurtakov@mandriva.org> 0:212-0.0.1mdv2008.1
-+ Revision: 177872
-- new version
+* Sun Aug 04 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 215-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
-* Wed Feb 27 2008 Alexander Kurtakov <akurtakov@mandriva.org> 0:211-0.0.1mdv2008.1
-+ Revision: 175924
-- import trilead-ssh2
+* Thu May 16 2013 Tom Callaway <spot@fedoraproject.org> - 215-1
+- update to 215
 
+* Fri Feb 15 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 213-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
+* Sun Jul 22 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 213-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 213-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 213-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Tue Dec 14 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 213-7
+- Add maven metadata
+- Drop gcj support
+- Changes according to new guidelines (no clean section/buildroot)
+- Versionless jars & javadocs
+
+* Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 213-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Mon Mar 30 2009 Robert Marcano <robert@marcanoonline.com> - 213-5
+- Fix Bug 492759, bad javadoc package group
+
+* Tue Feb 16 2009 Robert Marcano <robert@marcanoonline.com> - 213-4
+- Renaming package because main project moved, based on ganymed-ssh2
 
